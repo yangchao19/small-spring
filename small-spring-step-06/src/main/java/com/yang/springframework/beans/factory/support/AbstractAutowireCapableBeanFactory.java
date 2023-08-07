@@ -4,7 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import com.yang.springframework.beans.BeansException;
 import com.yang.springframework.beans.PropertyValue;
 import com.yang.springframework.beans.PropertyValues;
+import com.yang.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import com.yang.springframework.beans.factory.config.BeanDefinition;
+import com.yang.springframework.beans.factory.config.BeanPostProcessor;
 import com.yang.springframework.beans.factory.config.BeanReference;
 
 import java.lang.reflect.Constructor;
@@ -16,7 +18,7 @@ import java.util.Objects;
  * @date: 2023/7/7
  * @Copyright：
  */
-public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory{
+public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFactory implements AutowireCapableBeanFactory {
 
     private InstantiationStrategy instantiationStrategy = new CglibSubclassingInstantiationStrategy();
 
@@ -28,6 +30,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
             bean = createBeanInstance(beanDefinition,beanName,args);
             // 给 bean 填充属性
             applyPropertyValues(beanName, bean, beanDefinition);
+            // 执行Bean初始化和 BeanPostProcessor 的前置、后置处理方法
+            bean = initializeBean(beanName, bean, beanDefinition);
+
         } catch (Exception e) {
             throw new BeansException("Instance of bean failed",e);
         }
@@ -74,11 +79,55 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
     }
 
+
     public InstantiationStrategy getInstantiationStrategy() {
         return instantiationStrategy;
     }
 
     public void setInstantiationStrategy(InstantiationStrategy instantiationStrategy) {
         this.instantiationStrategy = instantiationStrategy;
+    }
+
+    private Object initializeBean(String beanName, Object bean, BeanDefinition beanDefinition) {
+
+        // 1. bean初始化前置处理
+        Object wrappedBean = applyBeanPostProcessorsBeforeInitialization(bean, beanName);
+
+        // 2. 初始化bean
+        invokeInitMethods(beanName, wrappedBean, beanDefinition);
+
+        // 3. bean初始化后置处理
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+        return wrappedBean;
+    }
+
+    private void invokeInitMethods(String BeanName, Object wrappedBean, BeanDefinition beanDefinition) {
+        // TODO
+    }
+
+    @Override
+    public Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName) throws BeansException {
+        Object result = existingBean;
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            Object current = beanPostProcessor.postProcessBeforeInitialization(result, beanName);
+            if (null == current) {
+                return result;
+            }
+            result = current;
+        }
+        return result;
+    }
+
+    @Override
+    public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName) throws BeansException {
+        Object result = existingBean;
+        for (BeanPostProcessor beanPostProcessor : getBeanPostProcessors()) {
+            Object current = beanPostProcessor.postProcessAfterInitialization(result, beanName);
+            if (null == current) {
+                return result;
+            }
+            result = current;
+        }
+        return result;
     }
 }

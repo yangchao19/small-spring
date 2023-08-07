@@ -4,6 +4,8 @@
 
     <bean id="userService" class="com.yang.springframework.test.bean.UserService">
         <property name="userId" value="100003"/>
+        <property name="company" value="华为"/>
+        <property name="location" value="合肥"/>
         <property name="userDao" ref="userDao"/>
     </bean>
 </beans>
