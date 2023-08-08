@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <beans>
-    <bean id="userDao" class="com.yang.springframework.test.bean.UserDao" />
+    <bean id="userDao" class="com.yang.springframework.test.bean.UserDao" init-method="initMethod" destroy-method="destroyMethod"/>
 
     <bean id="userService" class="com.yang.springframework.test.bean.UserService">
         <property name="userId" value="100003"/>
